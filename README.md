@@ -2,6 +2,13 @@
 
 A Model Context Protocol (MCP) server that enables AI assistants to interact with the ChatGPT desktop app on macOS.
 
+
+
+
+https://github.com/user-attachments/assets/a30c9b34-cdbe-4c0e-a0b0-33eb5054db5c
+
+
+
 ## Language Support
 
 **Supported system languages for response detection:**
