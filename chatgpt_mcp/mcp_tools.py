@@ -18,17 +18,21 @@ def is_conversation_complete() -> bool:
             indicators = screen_data.get("indicators", {})
             
             # Simple check: only use conversationComplete indicator
-            return indicators.get("conversationComplete", False)
+            result = indicators.get("conversationComplete", False)
+            print(f"[DEBUG] is_conversation_complete: {result}, indicators: {indicators}")
+            return result
         else:
+            print(f"[DEBUG] Screen read failed: {screen_data}")
             # If we can't read the screen, assume not complete for safety
             return False
             
-    except Exception:
+    except Exception as e:
+        print(f"[DEBUG] Exception in is_conversation_complete: {e}")
         # If any error occurs, assume not complete for safety
         return False
 
 
-def wait_for_response_completion(max_wait_time: int = 300, check_interval: float = 0.5) -> bool:
+def wait_for_response_completion(max_wait_time: int = 300, check_interval: float = 3) -> bool:
     """Wait for ChatGPT response to complete.
     
     Args:
