@@ -1,10 +1,12 @@
 import subprocess
 import time
+import json
+import os
 
 
 class ChatGPTAutomation:
     def __init__(self):
-        pass
+        self.applescript_path = os.path.join(os.path.dirname(__file__), 'read_chatgpt_screen.applescript')
         
     def activate_chatgpt(self):
         """ChatGPT Desktop 앱 활성화"""
@@ -42,6 +44,29 @@ class ChatGPTAutomation:
         '''
         
         subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
+    
+    def read_screen_content(self):
+        """AppleScript를 사용해서 ChatGPT 화면 내용 읽기"""
+        try:
+            result = subprocess.run(
+                ['osascript', self.applescript_path],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                # JSON 파싱 시도
+                try:
+                    data = json.loads(result.stdout)
+                    return data
+                except json.JSONDecodeError:
+                    # JSON 파싱 실패 시 raw 텍스트 반환
+                    return {"status": "error", "message": "JSON parse error", "raw": result.stdout}
+            else:
+                return {"status": "error", "message": result.stderr}
+                
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
 
 
 async def check_chatgpt_access() -> bool:

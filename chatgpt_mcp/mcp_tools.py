@@ -1,6 +1,77 @@
 import subprocess
+import time
 from mcp.server.fastmcp import FastMCP
 from chatgpt_mcp.chatgpt_automation import ChatGPTAutomation, check_chatgpt_access
+
+
+def is_conversation_complete() -> bool:
+    """Check if ChatGPT conversation is complete using external AppleScript.
+    
+    Returns:
+        True if conversation is complete, False if still in progress
+    """
+    try:
+        automation = ChatGPTAutomation()
+        screen_data = automation.read_screen_content()
+        
+        if screen_data.get("status") == "success":
+            indicators = screen_data.get("indicators", {})
+            
+            # Simple check: only use conversationComplete indicator
+            return indicators.get("conversationComplete", False)
+        else:
+            # If we can't read the screen, assume not complete for safety
+            return False
+            
+    except Exception:
+        # If any error occurs, assume not complete for safety
+        return False
+
+
+def wait_for_response_completion(max_wait_time: int = 300, check_interval: float = 0.5) -> bool:
+    """Wait for ChatGPT response to complete.
+    
+    Args:
+        max_wait_time: Maximum time to wait in seconds
+        check_interval: How often to check for completion in seconds
+        
+    Returns:
+        True if response completed within time limit, False if timed out
+    """
+    start_time = time.time()
+    
+    while time.time() - start_time < max_wait_time:
+        if is_conversation_complete():
+            return True
+        time.sleep(check_interval)
+    
+    return False
+
+
+def get_current_conversation_text() -> str:
+    """Get the current conversation text from ChatGPT.
+    
+    Returns:
+        Current conversation text
+    """
+    try:
+        automation = ChatGPTAutomation()
+        screen_data = automation.read_screen_content()
+        
+        if screen_data.get("status") == "success":
+            texts = screen_data.get("texts", [])
+            current_content = "\n".join(texts)
+            
+            # Clean up UI text
+            cleaned_result = current_content.strip()
+            cleaned_result = cleaned_result.replace('Regenerate', '').replace('Continue generating', '').replace('▍', '').strip()
+            
+            return cleaned_result if cleaned_result else "No response received from ChatGPT."
+        else:
+            return "Failed to read ChatGPT screen."
+            
+    except Exception as e:
+        return f"Error reading conversation: {str(e)}"
 
 
 async def get_chatgpt_response() -> str:
@@ -10,115 +81,11 @@ async def get_chatgpt_response() -> str:
         ChatGPT's latest response text
     """
     try:
-        applescript = '''
-            tell application "ChatGPT"
-                activate
-                delay 1
-                tell application "System Events"
-                    tell process "ChatGPT"
-                        -- Check if window exists before accessing
-                        if not (exists window 1) then
-                            return "No ChatGPT window found"
-                        end if
-                        -- Wait for the response with dynamic detection
-                        set maxWaitTime to 300 -- Maximum wait time in seconds (5 minutes)
-                        set waitInterval to 1 -- Check interval in seconds
-                        set totalWaitTime to 0
-                        set previousText to ""
-                        set stableCount to 0
-                        set requiredStableChecks to 60 -- Number of consecutive stable checks required (60 seconds for image generation)
-                        
-                        repeat while totalWaitTime < maxWaitTime
-                            delay waitInterval
-                            set totalWaitTime to totalWaitTime + waitInterval
-                            
-                            -- Get current text
-                            if not (exists window 1) then
-                                return "No ChatGPT window found"
-                            end if
-                            set frontWin to front window
-                            set allUIElements to entire contents of frontWin
-                            set conversationText to {}
-                            repeat with e in allUIElements
-                                try
-                                    if (role of e) is "AXStaticText" then
-                                        set end of conversationText to (description of e)
-                                    end if
-                                end try
-                            end repeat
-                            
-                            set AppleScript's text item delimiters to linefeed
-                            set currentText to conversationText as text
-                            
-                            -- Check if text has stabilized (not changing anymore)
-                            if currentText is equal to previousText then
-                                set stableCount to stableCount + 1
-                                if stableCount ≥ requiredStableChecks then
-                                    -- Text has been stable for multiple checks, assume response is complete
-                                    exit repeat
-                                end if
-                            else
-                                -- Text changed, reset stable count
-                                set stableCount to 0
-                                set previousText to currentText
-                            end if
-                            
-                            -- Check for response completion indicators
-                            if currentText contains "▍" then
-                                -- ChatGPT is still typing (blinking cursor indicator)
-                                set stableCount to 0
-                            else if currentText contains "Regenerate" or currentText contains "Continue generating" then
-                                -- Response likely complete if these UI elements are visible
-                                set stableCount to stableCount + 1
-                            end if
-                        end repeat
-                        
-                        -- Final check for text content
-                        if (count of conversationText) = 0 then
-                            return "No response text found. ChatGPT may still be processing or encountered an error."
-                        else
-                            -- Clean up the response text
-                            set AppleScript's text item delimiters to linefeed
-                            set responseText to conversationText as text
-                            
-                            return responseText
-                        end if
-                    end tell
-                end tell
-            end tell
-        '''
-        
-        result = subprocess.run(
-            ["osascript", "-e", applescript],
-            capture_output=True,
-            text=True
-        )
-        
-        if result.returncode != 0:
-            raise Exception(f"AppleScript error: {result.stderr}")
-        
-        # Post-process the result to clean up any UI text that might have been captured
-        cleaned_result = result.stdout.strip()
-        cleaned_result = cleaned_result.replace('Regenerate', '').replace('Continue generating', '').replace('▍', '').strip()
-        
-        # More context-aware incomplete response detection
-        is_likely_complete = (
-            len(cleaned_result) > 50 or  # Longer responses are likely complete
-            cleaned_result.endswith('.') or 
-            cleaned_result.endswith('!') or 
-            cleaned_result.endswith('?') or
-            cleaned_result.endswith(':') or
-            cleaned_result.endswith(')') or
-            cleaned_result.endswith('}') or
-            cleaned_result.endswith(']') or
-            '\n\n' in cleaned_result or  # Multiple paragraphs suggest completeness
-            cleaned_result and cleaned_result[0].isupper() and any(cleaned_result.endswith(p) for p in ['.', '!', '?'])  # Complete sentence structure
-        )
-        
-        if len(cleaned_result) > 0 and not is_likely_complete:
-            print("Warning: ChatGPT response may be incomplete")
-        
-        return cleaned_result if cleaned_result else "No response received from ChatGPT."
+        # Wait for response to complete
+        if wait_for_response_completion():
+            return get_current_conversation_text()
+        else:
+            return "Timeout: ChatGPT response did not complete within the time limit."
         
     except Exception as e:
         raise Exception(f"Failed to get response from ChatGPT: {str(e)}")
@@ -140,9 +107,9 @@ async def ask_chatgpt(prompt: str) -> str:
         cleaned_prompt = prompt.replace('\n', ' ').replace('\r', ' ').replace('"', "'").strip()
         
         # Activate ChatGPT and send message using keystroke
-        chatgpt_automation = ChatGPTAutomation()
-        chatgpt_automation.activate_chatgpt()
-        chatgpt_automation.send_message_with_keystroke(cleaned_prompt)
+        automation = ChatGPTAutomation()
+        automation.activate_chatgpt()
+        automation.send_message_with_keystroke(cleaned_prompt)
         
         # Get the response
         response = await get_chatgpt_response()
