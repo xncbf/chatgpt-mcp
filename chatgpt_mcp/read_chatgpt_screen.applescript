@@ -62,15 +62,15 @@ on run
 					
 					-- Check if this is the model selection button
 					if btnValue is not missing value and btnHelp is not missing value then
-						if (btnHelp contains "ëª¨ë¸" or btnHelp contains "model" or btnHelp contains "GPT") and (length of btnValue > 0) then
+						if (btnHelp contains "¸ðµ¨" or btnHelp contains "model" or btnHelp contains "GPT") and (length of btnValue > 0) then
 							set foundModelButton to true
 							-- Check if next button exists and has voice/input related functionality
-							if i < count of buttonsList then
+							if i < (count of buttonsList) then
 								set nextButton to item (i + 1) of buttonsList
 								try
 									set nextBtnHelp to help of nextButton
 									if nextBtnHelp is not missing value then
-										if (nextBtnHelp contains "ìŒì„±" or nextBtnHelp contains "ë°›ì•„ì“°ê¸°" or nextBtnHelp contains "voice" or nextBtnHelp contains "dictation" or nextBtnHelp contains "speech") then
+										if (nextBtnHelp contains "À½¼º ¹Þ¾Æ¾²±â" or nextBtnHelp contains "Transcribe voice") then
 											set conversationComplete to true
 										end if
 									end if
@@ -88,7 +88,7 @@ on run
 					try
 						set btnHelp to help of btnElement
 						if btnHelp is not missing value then
-							if (btnHelp contains "ìŒì„±" or btnHelp contains "ë°›ì•„ì“°ê¸°" or btnHelp contains "voice" or btnHelp contains "dictation" or btnHelp contains "speech") then
+							if (btnHelp contains "À½¼º" or btnHelp contains "¹Þ¾Æ¾²±â" or btnHelp contains "voice" or btnHelp contains "dictation" or btnHelp contains "speech") then
 								set conversationComplete to true
 								exit repeat
 							end if

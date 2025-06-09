@@ -2,6 +2,16 @@
 
 A Model Context Protocol (MCP) server that enables AI assistants to interact with the ChatGPT desktop app on macOS.
 
+## Language Support
+
+**Supported system languages for response detection:**
+- Korean
+- English
+
+**If your macOS system language is not listed above, please follow these instructions:**
+1. Make sure ChatGPT desktop app is running
+2. Run `show_all_button_names.applescript` and copy the output to create an issue for language support.
+
 ## Features
 
 - Send prompts to ChatGPT from any MCP-compatible AI assistant
