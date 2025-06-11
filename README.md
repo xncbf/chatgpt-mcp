@@ -6,7 +6,7 @@ A Model Context Protocol (MCP) server that enables AI assistants to interact wit
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@xncbf/chatgpt-mcp/badge" alt="ChatGPT Server MCP server" />
 </a>
 
-![Screenshot](https://github.com/user-attachments/assets/a30c9b34-cdbe-4c0e-a0b0-33eb5054db5c)
+https://github.com/user-attachments/assets/a30c9b34-cdbe-4c0e-a0b0-33eb5054db5c
 
 ## Language Support
 
