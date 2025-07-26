@@ -123,6 +123,35 @@ async def ask_chatgpt(prompt: str) -> str:
         raise Exception(f"Failed to send message to ChatGPT: {str(e)}")
 
 
+async def new_chatgpt_chat() -> str:
+    """Start a new chat conversation in ChatGPT.
+    
+    Returns:
+        Success message or error
+    """
+    await check_chatgpt_access()
+    
+    try:
+        automation = ChatGPTAutomation()
+        result = automation.new_chat()
+        
+        if isinstance(result, tuple):
+            success, method = result
+            if success:
+                return f"Successfully opened a new ChatGPT chat window using: {method}"
+            else:
+                return f"Failed to open a new chat window. Last tried method: {method}"
+        else:
+            # 이전 버전과의 호환성
+            if result:
+                return "Successfully opened a new ChatGPT chat window."
+            else:
+                return "Failed to open a new chat window. Please check if ChatGPT window is in the foreground."
+            
+    except Exception as e:
+        raise Exception(f"Failed to create new chat: {str(e)}")
+
+
 def setup_mcp_tools(mcp: FastMCP):
     """MCP 도구들을 설정"""
     
@@ -135,3 +164,8 @@ def setup_mcp_tools(mcp: FastMCP):
     async def get_chatgpt_response_tool() -> str:
         """Get the latest response from ChatGPT after sending a message."""
         return await get_chatgpt_response()
+    
+    @mcp.tool()
+    async def new_chatgpt_chat_tool() -> str:
+        """Start a new chat conversation in ChatGPT."""
+        return await new_chatgpt_chat()

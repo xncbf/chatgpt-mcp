@@ -108,6 +108,38 @@ Get the latest response from ChatGPT after sending a message.
 get_chatgpt_response()
 ```
 
+### new_chatgpt_chat
+Start a new chat conversation in ChatGPT.
+
+```python
+new_chatgpt_chat()
+```
+
+## Development
+
+### Local Testing
+
+To test the MCP server locally during development:
+
+1. **Install in editable mode**
+   ```bash
+   uv pip install -e .
+   ```
+
+2. **Test with MCP Inspector**
+   ```bash
+   npx @modelcontextprotocol/inspector chatgpt-mcp
+   ```
+
+The editable installation creates a `chatgpt-mcp` command that directly references your source code, so any changes you make are immediately reflected without reinstalling.
+
+### Running without installation
+
+You can also run the server directly:
+```bash
+PYTHONPATH=. uv run python -m chatgpt_mcp.chatgpt_mcp
+```
+
 ## License
 
 MIT
